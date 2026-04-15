@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="description" content="CarCare Garage - Personal vehicle maintenance tracker with reminders">
+    <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;CarCare Garage&quot;,&quot;short_name&quot;:&quot;CarCare&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#0a0e27&quot;,&quot;theme_color&quot;:&quot;#0a0e27&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'&gt;&lt;rect fill='%23ff6b6b' width='192' height='192'/&gt;&lt;text x='50%' y='50%' font-size='120' fill='%23fff' text-anchor='middle' dominant-baseline='middle'&gt;🔧&lt;/text&gt;&lt;/svg&gt;&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;,&quot;purpose&quot;:&quot;any&quot;}]}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+    <title>CarCare Garage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0e27;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1f3a 0%, #252d4a 100%);
+            padding: 1rem;
+            border-bottom: 2px solid #2a3050;
+            flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .vehicles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .vehicle-card {
+            background: #1a1f3a;
+            border: 2px solid #2a3050;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            text-align: center;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .vehicle-card:active {
+            border-color: #ff6b6b;
+            background: #252d4a;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+            transform: scale(0.98);
+        }
+
+        .vehicle-card.selected {
+            border-color: #ff6b6b;
+            background: #252d4a;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .vehicle-image {
+            width: 100%;
+            height: 100px;
+            background: #0a0e27;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px dashed #2a3050;
+            font-size: 2.5rem;
+        }
+
+        .vehicle-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .vehicle-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .vehicle-model {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .add-vehicle-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        .add-vehicle-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+
+        .detail-view {
+            display: none;
+            padding-bottom: 60px;
+        }
+
+        .detail-view.active {
+            display: block;
+        }
+
+        .vehicle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #2a3050;
+        }
+
+        .vehicle-header h2 {
+            font-size: 1.3rem;
+        }
+
+        .back-btn {
+            background: #2a3050;
+            color: #e0e0e0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .back-btn:active {
+            background: #3a4070;
+        }
+
+        .vehicle-photo {
+            width: 100%;
+            height: 250px;
+            background: #0a0e27;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px dashed #2a3050;
+            font-size: 3rem;
+        }
+
+        .vehicle-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .photo-buttons button {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #2a3050;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab {
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .tab:active {
+            color: #ccc;
+        }
+
+        .tab.active {
+            color: #ff6b6b;
+            border-bottom-color: #ff6b6b;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: #0a0e27;
+            border: 1px solid #2a3050;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            color: #000;
+        }
+
+        .btn-primary:active {
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #2a3050;
+            color: #e0e0e0;
+        }
+
+        .btn-secondary:active {
+            background: #3a4070;
+        }
+
+        .btn-danger {
+            background: #8b0000;
+            color: #fff;
+        }
+
+        .btn-danger:active {
+            background: #a50000;
+        }
+
+        .log-item {
+            background: #252d4a;
+            border-left: 4px solid #ff6b6b;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .log-info h4 {
+            margin-bottom: 0.25rem;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .log-meta {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 0.25rem;
+        }
+
+        .log-cost {
+            font-size: 1.1rem;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .log-notes {
+            margin-top: 0.25rem;
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        .reminder-item {
+            background: #252d4a;
+            border-left: 4px solid #ffa500;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .reminder-item.overdue {
+            border-left-color: #ff6b6b;
+        }
+
+        .reminder-info h4 {
+            margin-bottom: 0.25rem;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .reminder-due {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .reminder-status {
+            font-weight: bold;
+            margin-top: 0.25rem;
+            font-size: 0.85rem;
+        }
+
+        .reminder-status.overdue {
+            color: #ff6b6b;
+        }
+
+        .reminder-status.upcoming {
+            color: #ffa500;
+        }
+
+        .analytics-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .analytics-card {
+            background: #252d4a;
+            border-left: 4px solid #ff6b6b;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .analytics-label {
+            color: #888;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .analytics-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: flex-end;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1f3a;
+            border-top: 2px solid #2a3050;
+            border-radius: 16px 16px 0 0;
+            padding: 1.5rem;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-header {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .notification-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ff6b6b;
+            color: #000;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+            z-index: 2000;
+            animation: slideDown 0.3s ease;
+        }
+
+        .notification-banner.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1f3a;
+            border-top: 2px solid #2a3050;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 0.25rem;
+            flex-shrink: 0;
+            padding: 0.5rem;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.65rem;
+            transition: color 0.2s;
+        }
+
+        .nav-btn.active {
+            color: #ff6b6b;
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            background: #0a0e27;
+            border: 2px dashed #2a3050;
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+        }
+
+        .file-input-label:active {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.05);
+        }
+
+        @media (max-width: 480px) {
+            .vehicles-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .analytics-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .delete-btn {
+            background: #8b0000;
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .delete-btn:active {
+            background: #a50000;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>🔧 CarCare Garage</h1>
+            <small style="color: #888;">Personal maintenance tracker</small>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <!-- Garage View -->
+            <div id="garageView" class="garage-view">
+                <button class="add-vehicle-btn" onclick="openAddVehicleModal()">+ Add Vehicle</button>
+                <div class="vehicles-grid" id="vehiclesGrid"></div>
+            </div>
+
+            <!-- Detail View -->
+            <div id="detailView" class="detail-view"></div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-btn active" onclick="showGarage()"><span class="nav-icon">🏠</span><span>Garage</span></button>
+            <button class="nav-btn" onclick="showStats()"><span class="nav-icon">📊</span><span>Stats</span></button>
+            <button class="nav-btn" onclick="showNotifications()"><span class="nav-icon">🔔</span><span>Alerts</span></button>
+            <button class="nav-btn" onclick="showSettings()"><span class="nav-icon">⚙️</span><span>Settings</span></button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="addVehicleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add New Vehicle</div>
+            <form onsubmit="saveNewVehicle(event)">
+                <div class="form-group">
+                    <label>Year *</label>
+                    <input type="number" id="vehicleYear" required min="1900" max="2100" value="2024">
+                </div>
+                <div class="form-group">
+                    <label>Make *</label>
+                    <input type="text" id="vehicleMake" placeholder="Toyota, Honda, Ford..." required>
+                </div>
+                <div class="form-group">
+                    <label>Model *</label>
+                    <input type="text" id="vehicleModel" placeholder="Camry, Civic, Mustang..." required>
+                </div>
+                <div class="form-group">
+                    <label>VIN (Optional)</label>
+                    <input type="text" id="vehicleVin" placeholder="Vehicle ID Number">
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Photo (Optional)</label>
+                    <label class="file-input-label">
+                        📷 Tap to add photo
+                        <input type="file" id="vehiclePhoto" accept="image/*">
+                    </label>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Add Vehicle</button>
+                    <button type="button" class="btn-secondary" onclick="closeModal('addVehicleModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="addLogModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add Maintenance Log</div>
+            <form onsubmit="saveMaintenanceLog(event)">
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" id="logDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Service Category *</label>
+                    <select id="logCategory" required onchange="updateServiceOptions()">
+                        <option value="">Select Category</option>
+                        <option value="Brakes">Brakes</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="HVAC">HVAC (Climate Control)</option>
+                        <option value="Powertrain">Powertrain</option>
+                        <option value="Safety">Safety</option>
+                        <option value="Steering">Steering</option>
+                        <option value="Suspension">Suspension</option>
+                        <option value="Vehicle">Vehicle Services</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Service Type *</label>
+                    <select id="logService" required>
+                        <option value="">Select Service</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cost ($) *</label>
+                    <input type="number" id="logCost" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Mileage (miles)</label>
+                    <input type="number" id="logMileage" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="logNotes" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Save Log</button>
+                    <button type="button" class="btn-secondary" onclick="closeModal('addLogModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Service type mappings -->
+    <script>
+        const serviceCategories = {
+            'Brakes': ['ABS accumulator replaced/repaired', 'ABS fluid flushed/changed', 'ABS modulator replaced', 'ABS module replaced', 'ABS power unit replaced', 'ABS pressure switch replaced', 'ABS pump/motor replaced', 'ABS relay replaced', 'ABS sensor replaced', 'ABS system bled', 'ABS system checked', 'ABS wiring repaired', 'Air brakes adjusted', 'Air brakes checked', 'Brake backing plate replaced', 'Brake booster check valve replaced', 'Brake booster replaced', 'Brake booster travel sensor replaced', 'Brake booster vacuum hose replaced', 'Brake cable replaced', 'Brake caliper overhauled', 'Brake caliper replaced', 'Brake calipers cleaned', 'Brake control module replaced', 'Brake controller replaced', 'Brake drum replaced', 'Brake drum resurfaced', 'Brake fluid checked', 'Brake fluid flushed', 'Brake fluid level sensor replaced', 'Brake fluid level switch replaced', 'Brake fluid reservoir replaced', 'Brake hose replaced', 'Brake light bulb replaced', 'Brake line replaced', 'Brake master cylinder cap replaced', 'Brake master cylinder overhauled', 'Brake master cylinder replaced', 'Brake operating unit replaced', 'Brake pad sensor replaced', 'Brake pads replaced', 'Brake pedal assembly replaced', 'Brake pedal pad replaced', 'Brake pedal position sensor replaced', 'Brake pedal/linkage adjusted', 'Brake pressure control valve replaced', 'Brake rotor replaced', 'Brake rotor resurfaced', 'Brake shoes replaced', 'Brake system bled', 'Brake wheel cylinder overhauled', 'Brake wheel cylinder replaced', 'Brakes replaced', 'Brakes serviced', 'Front ABS sensor assembly replaced', 'Front brake caliper replaced', 'Front brake hose replaced', 'Front brake pads replaced', 'Front brake rotor replaced', 'Front brake rotor resurfaced', 'Front brakes replaced', 'Front brakes serviced', 'Hydraulic control unit replaced', 'Parking brake adjusted', 'Parking brake cable lubricated', 'Parking brake control replaced', 'Parking brake repaired', 'Parking brake shoes replaced', 'Parking brake system checked', 'Parking sensor replaced', 'Parking sensor system checked', 'Parking sensor system installed', 'Rear ABS sensor assembly replaced', 'Rear brake caliper replaced', 'Rear brake hose replaced', 'Rear brake pads replaced', 'Rear brake rotor replaced', 'Rear brake rotor resurfaced', 'Rear brake shoes replaced', 'Rear brakes replaced', 'Rear brakes serviced', 'Tone/sensor ring replaced', 'Vacuum pump replaced'],
+            'Electrical': ['Alternator checked', 'Alternator repaired', 'Alternator replaced', 'Alternator/Generator mount replaced', 'Amplifier/sub-woofer installed', 'Antenna installed', 'Antenna lead replaced', 'Antenna replaced', 'Antenna serviced', 'Anti-theft computer replaced', 'Anti-theft sensor replaced', 'Anti-theft/alarm installed', 'Anti-theft/alarm removed', 'Anti-theft/alarm repaired', 'Anti-theft/alarm reset', 'Anti-theft/keyless device installed', 'Anti-theft/keyless device removed', 'Anti-theft/keyless device repaired', 'Anti-theft/keyless remote battery replaced', 'Anti-theft/keyless remote replaced', 'Anti-theft/keyless system checked', 'Anti-theft/keyless system serviced', 'Anti-theft/keyless disarm switch replaced', 'Battery blanket installed', 'Battery cable connection bolt replaced', 'Battery cable terminal end replaced', 'Battery cable replaced', 'Battery charged', 'Battery charger installed', 'Battery control module replaced', 'Battery replaced', 'Battery serviced', 'Battery tray/cover replaced', 'Battery/charging system checked', 'Body computer module checked', 'Body computer module replaced', 'Body computer module reprogrammed', 'Body electrical system checked', 'Body electrical wiring repaired', 'Brake light switch adjusted', 'Brake light switch repaired', 'Brake light switch replaced', 'CD changer installed', 'CD changer replaced', 'CD player installed', 'CD player replaced', 'CD player/changer reinstalled', 'CD player/changer removed', 'Circuit board replaced', 'Circuit breaker replaced', 'Circuit relay wiring harness installed', 'Clock light bulb replaced', 'Clock replaced', 'Computer module replaced', 'Computer reprogrammed', 'Computer/module relay replaced', 'Console light bulb replaced', 'Courtesy light switch replaced', 'Courtesy light bulb replaced', 'Cruise control brake cancel switch replaced', 'Cruise control cable adjusted', 'Cruise control cable replaced', 'Cruise control checked', 'Cruise control installed', 'Cruise control module replaced', 'Cruise control serviced', 'Cruise control servo replaced', 'Cruise control switch replaced', 'DVD player checked', 'DVD player installed', 'DVD player replaced', 'Dash gauges checked', 'Dash light bulb replaced', 'Dash light dimmer switch replaced', 'Dash switches checked', 'Daylight sensor replaced', 'Daytime running light bulb replaced', 'Daytime running light computer replaced', 'Daytime running light computer reprogrammed', 'Daytime running lights replaced', 'Daytime running lights checked', 'Daytime running lights resistor replaced', 'Distributor assembly replaced', 'Distributor cap replaced', 'Distributor rotor replaced', 'Distributor seal replaced', 'Dome light assembly replaced', 'Dome light bulb replaced', 'Dome light switch replaced', 'Door lock switch replaced', 'Driving lights installed', 'Electrical system checked', 'Engine electrical system checked', 'Entertainment system repaired', 'Exterior light bulb replaced', 'Exterior lights repaired', 'Exterior lights checked', 'Exterior lights wiring repaired', 'Fog light assembly replaced', 'Fog light bulb replaced', 'Fog light switch replaced', 'Fog lights installed', 'Fog lights removed', 'Front turn signal assembly replaced', 'Front turn signal bulb replaced', 'Front wiper blades replaced', 'Fuse block replaced', 'Fuse replaced', 'Fusible link replaced', 'GPS removed', 'GPS/Navigation antenna replaced', 'GPS/Navigation module checked', 'GPS/Navigation module replaced', 'GPS/Navigation module reprogrammed', 'GPS/Navigation system checked', 'GPS/Navigation system serviced', 'GPS/Navigation system installed', 'Hazard light switch replaced', 'Headlight ballast replaced', 'Headlight bulb replaced', 'Headlight control unit replaced', 'Headlight dimmer switch replaced', 'Headlight motor replaced', 'Headlight switch replaced', 'Headlight washer pump motor replaced', 'Headlight wiper repaired', 'Headlight replaced', 'Headlights adjusted', 'Headlights serviced', 'High voltage battery charged', 'High voltage battery checked', 'High voltage battery replaced', 'High voltage battery serviced', 'Hood light switch replaced', 'Horn contact replaced', 'Horn relay replaced', 'Horn repaired', 'Horn replaced', 'Horns checked', 'Igniter replaced', 'Ignition coil replaced', 'Ignition control module replaced', 'Ignition key warning switch replaced', 'Ignition lock cylinder replaced', 'Ignition relay harness installed', 'Ignition relay replaced', 'Ignition switch replaced', 'Ignition switch wiring repaired', 'Ignition system checked', 'Ignition system serviced', 'Instrument cluster bezel replaced', 'Instrument cluster checked', 'Instrument cluster harness installed', 'Instrument cluster lens replaced', 'Instrument cluster printed circuit board replaced', 'Instrument cluster replaced', 'Instrument cluster reprogrammed', 'Instrument panel repaired', 'Instrument panel replaced', 'Interior lamp assembly replaced', 'Interior light bulb replaced', 'Interior lights checked', 'Inverter operation checked', 'Inverter serviced', 'Key reprogrammed', 'Knob replaced', 'Lamp assembly replaced', 'Left front door lock switch replaced', 'Left front window switch replaced', 'Left tail light assembly replaced', 'Lens replaced', 'License lamp assembly replaced', 'License plate light bulb replaced', 'Liftgate/tailgate closing switch replaced', 'Liftgate/tailgate release switch replaced', 'Light bulb replaced', 'Lights checked', 'Marker lamp assembly replaced', 'Message center module replaced', 'Multi-function switch replaced', 'Neutral safety/start switch adjusted', 'Neutral safety/start switch replaced', 'No-start/hard start condition checked', 'OnStar deactivated', 'OnStar installed', 'Outside mirror switch replaced', 'Parking brake light switch replaced', 'Positive battery cable replaced', 'Power inverter replaced', 'Power outlet replaced', 'Power window relay replaced', 'Radio accessories installed', 'Radio code retrieved', 'Radio installed', 'Radio reinstalled', 'Radio removed', 'Radio replaced', 'Radio speaker grille replaced', 'Radio speaker replaced', 'Radio speakers installed', 'Radio/sound system reprogrammed', 'Radio/sound system checked', 'Radio/sound system repaired', 'Rain sensor computer replaced', 'Rain sensor replaced', 'Rear washer fluid hose replaced', 'Rear wiper blade replaced', 'Rear wiper motor replaced', 'Relay replaced', 'Remote start installed', 'Remote reprogrammed', 'Reverse light assembly replaced', 'Reverse light bulb replaced', 'Reverse light switch adjusted', 'Reverse light switch replaced', 'Reverse warning alarm installed', 'Right front door lock switch replaced', 'Right front window switch replaced', 'Right tail light assembly replaced', 'Shift indicator light bulb replaced', 'Shift indicator replaced', 'Socket repaired', 'Sound system component installed', 'Starter contacts replaced', 'Starter overhauled', 'Starter relay replaced', 'Starter replaced', 'Starter solenoid replaced', 'Steering remote control switch replaced', 'Sunroof switch replaced', 'Switch replaced', 'Tail lamp assembly replaced', 'Tail light assembly replaced', 'Tail light bulb replaced', 'Tail light lens replaced', 'Tail light lens resealed', 'Tailgate/trunk transmitter replaced', 'Telephone installed', 'Telephone removed', 'Telephone repaired', 'Telephone handset replaced', 'Terrain optimization switch replaced', 'Transfer selector switch replaced', 'Trunk lamp/bulb replaced', 'Trunk light switch replaced', 'Turn signal bulb replaced', 'Turn signal lens replaced', 'Turn signal switch replaced', 'Turn signal repaired', 'Turn signal/hazard flasher replaced', 'Voltage regulator replaced', 'Warning alarm replaced', 'Washer fluid level sensor replaced', 'Washer fluid reservoir cap replaced', 'Washer fluid reservoir replaced', 'Washer hose/line check valve replaced', 'Washer hose/line replaced', 'Washer nozzle adjusted', 'Washer nozzle replaced', 'Washer pump module replaced', 'Washer pump replaced', 'Window lock switch replaced', 'Window switch replaced', 'Windshield washer checked', 'Windshield wiper hose replaced', 'Wiper arm replaced', 'Wiper arm/linkage adjusted', 'Wiper arms adjusted', 'Wiper circuit board replaced', 'Wiper linkage assembly replaced', 'Wiper module replaced', 'Wiper motor gear cover replaced', 'Wiper motor ground wire repaired', 'Wiper motor replaced', 'Wiper pivot replaced', 'Wiper switch replaced', 'Wiper replaced', 'Wipers/washers checked', 'Wipers/washers repaired', 'Wipers/washers serviced', 'Wiring harness checked', 'Wiring harness installed', 'Wiring harness protective tubing installed', 'Wiring harness tubing installed', 'Wiring repaired'],
+            'HVAC': ['A/C accumulator replaced', 'A/C and heating control assembly checked', 'A/C and heating control assembly replaced', 'A/C and heating control cable adjusted', 'A/C and heating control cable replaced', 'A/C and heating control knob replaced', 'A/C and heating controls repaired', 'A/C and heating system checked', 'A/C and heating temperature control checked', 'A/C and heating temperature control replaced', 'A/C and heating wiring repaired', 'A/C clutch gap adjusted', 'A/C clutch/pulley replaced', 'A/C compressor repaired', 'A/C compressor serviced', 'A/C compressor manifold replaced', 'A/C compressor replaced', 'A/C compressor shaft seal replaced', 'A/C condenser replaced', 'A/C cut off switch replaced', 'A/C cycling/pressure switch replaced', 'A/C evaporator case replaced', 'A/C evaporator replaced', 'A/C evaporator temperature sensor replaced', 'A/C expansion/orifice valve replaced', 'A/C freon conversion completed', 'A/C hose assembly replaced', 'A/C hose/line replaced', 'A/C hose/line seals replaced', 'A/C installed', 'A/C leak checked', 'A/C liquid line replaced', 'A/C receiver/dryer replaced', 'A/C refrigerant recharged', 'A/C relay replaced', 'A/C service valves replaced', 'A/C suction line replaced', 'A/C system checked', 'A/C system flushed', 'A/C system serviced', 'A/C thermistor replaced', 'Air conditioning system installed', 'Air distribution box replaced', 'Air vent/outlet replaced', 'Blend/diverter door actuator replaced', 'Blower motor controller replaced', 'Blower motor limit switch replaced', 'Blower motor operation checked', 'Blower motor relay replaced', 'Blower motor replaced', 'Blower motor resistor replaced', 'Blower motor serviced', 'Blower motor switch replaced', 'Blower motor wiring repaired', 'Blower motor/compressor control module replaced', 'Cabin air filter checked', 'Cabin air filter replaced', 'Evaporator case drain hose replaced', 'Evaporator case drain hose serviced', 'Evaporator case repaired', 'Heater control valve adjusted', 'Heater control valve replaced', 'Heater core replaced', 'Heater hose replaced', 'Heater housing repaired', 'Heater housing replaced', 'Heater repaired', 'Inside air temperature sensor replaced', 'Rear A/C actuator replaced', 'Rear blower motor replaced', 'Refrigerant added for leak check'],
+            'Powertrain': ['Accelerator cable adjusted', 'Accelerator cable replaced', 'Accelerator linkage/bracket checked', 'Accelerator linkage/bracket repaired', 'Accelerator pedal replaced', 'Accelerator position sensor replaced', 'Air filter checked', 'Air filter cleaned', 'Air filter housing replaced', 'Air filter replacement', 'Air filter restriction gauge checked', 'Air injection pump replaced', 'Air injection system filter replaced', 'Air intake hose replaced', 'Air system checked', 'Air valve replaced', 'Antifreeze/coolant checked', 'Antifreeze/coolant flushed', 'Automatic transmission checked', 'Automatic transmission cooler flushed', 'Automatic transmission cooler lines replaced', 'Automatic transmission cooler replaced', 'Automatic transmission overdrive switch replaced', 'Automatic transmission pan gasket replaced', 'Automatic transmission pan replaced', 'Automatic transmission replaced', 'Automatic transmission serviced', 'Axle bearing replaced', 'Axle housing / integral carrier replaced', 'Axle seal replaced', 'Axle replaced', 'Axle serviced', 'Axles checked', 'Balance shaft replaced', 'Balancer shaft belt replaced', 'Balancer shaft seal replaced', 'Boost control solenoid replaced', 'Boost pressure checked', 'Boost sensor replaced', 'Breather filter cleaned', 'Breather filter replaced', 'Camshaft adjuster solenoid replaced', 'Camshaft and crankshaft seals replaced', 'Camshaft position sensor adjusted', 'Camshaft position sensor replaced', 'Camshaft seal replaced', 'Camshaft timing reset', 'Camshaft tower seal replaced', 'Camshaft replaced', 'Carburetor repaired', 'Carburetor serviced', 'Carburetor/choke checked', 'Catalyst monitor sensor replaced', 'Catalyst converter checked', 'Catalytic converter etching performed', 'Catalytic converter heat shield replaced', 'Catalytic converter replaced', 'Center exhaust pipe replaced', 'Central timer computer/module replaced', 'Charcoal/vapor canister replaced', 'Choke adjusted', 'Choke/choke pulloff repaired', 'Clutch adjusted', 'Clutch assembly replaced', 'Clutch bushing replaced', 'Clutch cable replaced', 'Clutch checked', 'Clutch disc replaced', 'Clutch fluid flushed', 'Clutch hose replaced', 'Clutch master cylinder replaced', 'Clutch packs replaced', 'Clutch pedal assembly replaced', 'Clutch pedal pad replaced', 'Clutch pilot bearing replaced', 'Clutch pressure plate replaced', 'Clutch release bearing replaced', 'Clutch replaced', 'Clutch serviced', 'Clutch slave cylinder replaced', 'Clutch start switch replaced', 'Clutch system bled', 'Cold air intake installed', 'Computer checked', 'Coolant bypass pipe/hose replaced', 'Coolant flange replaced', 'Coolant flange seal replaced', 'Coolant level sensor replaced', 'Coolant reservoir cap replaced', 'Coolant reservoir replaced', 'Coolant temperature sensor replaced', 'Cooling fan clutch replaced', 'Cooling system bled', 'Cooling system checked', 'Cooling system hose replaced', 'Cooling system hoses checked', 'Cooling system serviced', 'Core/freeze plug replaced', 'Crankcase pressure checked', 'Crankcase ventilation regulator replaced', 'Crankshaft main bearing replaced', 'Crankshaft oil seal replaced', 'Crankshaft position sensor replaced', 'Crankshaft pulley/balancer replaced', 'Crankshaft replaced', 'Crankshaft sensor seal replaced', 'Crankshaft vibration damper replaced', 'Cylinder head gasket replaced', 'Cylinder head replaced', 'Cylinder head serviced', 'Cylinder identification sensor replaced', 'Decarbon service completed', 'Diesel engine throttle cable replaced', 'Diesel particulate filter checked', 'Diesel particulate filter replaced', 'Differential backlash adjusted', 'Differential bearing replaced', 'Differential carrier bearing replaced', 'Differential checked', 'Differential clutch pack replaced', 'Differential cover resealed', 'Differential cover replaced', 'Differential fluid checked', 'Differential fluid flushed', 'Differential fluid leak checked', 'Differential replaced', 'Differential ring gear and pinion replaced', 'Differential seal replaced', 'Differential serviced', 'Differential speed sensor replaced', 'Differential rebuilt', 'Dipstick replaced', 'Dipstick tube replaced', 'Distributor vacuum valve replaced', 'Diverter valve replaced', 'Drain plug gasket replaced', 'Drive axle mount checked', 'Drive belt idler pulley bracket replaced', 'Drive belt idler pulley replaced', 'Drive belt tensioner pulley replaced', 'Drive belt tensioner replaced', 'Drive belt replaced', 'Drive belts adjusted', 'Drive belts checked', 'Drive belts serviced', 'Driveshaft aligned', 'Driveshaft balanced', 'Driveshaft checked', 'Driveshaft flex disc replaced', 'Driveshaft replaced', 'Driveshaft seal replaced', 'Driveshaft serviced', 'Driveshaft universal joint replaced', 'Driveshaft yoke replaced', 'Drivetrain checked', 'EGR feedback control solenoid replaced', 'EGR ports repaired', 'EGR system checked', 'EGR system serviced', 'EGR tube/hose replaced', 'EGR valve replaced', 'EGR/DPFE feedback sensor replaced', 'EGR/DPFE feedback valve replaced', 'Electronic transfer case checked', 'Electronic vacuum regulator replaced', 'Emission system checked', 'Emissions back pressure valve replaced', 'Emissions system filter replaced', 'Emissions system hose/pipe replaced', 'Emissions system serviced', 'Encoder motor replaced', 'Encoder motor sensor replaced', 'Engine block heater installed', 'Engine block heater replaced', 'Engine block heater serviced', 'Engine checked', 'Engine cleaned', 'Engine compression checked', 'Engine cover removed and reinstalled', 'Engine cradle replaced', 'Engine destroyed', 'Engine idle checked', 'Engine idle/timing adjusted', 'Engine mount adjusted', 'Engine mount replaced', 'Engine mounts checked', 'Engine oil cooler adapter replaced', 'Engine oil cooler line replaced', 'Engine oil cooler replaced', 'Engine oil filler cap/seal replaced', 'Engine oil filter adapter gasket replaced', 'Engine oil filter adapter replaced', 'Engine oil heater installed', 'Engine oil leak repaired', 'Engine oil pick-up/screen replaced', 'Engine oil pressure checked', 'Engine oil pump replaced', 'Engine oil system flushed', 'Engine oil/fluid leak checked', 'Engine overhauled', 'Engine push rod replaced', 'Engine replaced', 'Engine removed to complete repair', 'Engine seal/gasket replaced', 'Engine serviced', 'Engine timing/front cover gasket replaced', 'Engine timing/front cover replaced', 'Engine valve guides checked', 'Engine valve seals replaced', 'Engine valve spring replaced', 'Engine valves adjusted', 'Engine valves replaced', 'Engine wiring harness repaired', 'Engine wiring repaired', 'Engine/powertrain computer checked', 'Engine/powertrain computer replaced', 'Engine/powertrain computer reprogrammed', 'Evaporative emission system checked', 'Evaporative emissions pump replaced', 'Evaporative emissions vent purge valve replaced', 'Evaporative emissions vent solenoid replaced', 'Exhaust flex pipe replaced', 'Exhaust fluid serviced', 'Exhaust manifold bolts replaced', 'Exhaust manifold gasket replaced', 'Exhaust manifold replaced', 'Exhaust pipe replaced', 'Exhaust pipe seal replaced', 'Exhaust repaired', 'Exhaust replaced', 'Exhaust secured', 'Exhaust system checked', 'Exhaust system replaced', 'Extension housing gasket replaced', 'Extension housing seal replaced', 'Filler tube/seal replaced', 'Flywheel resurfaced', 'Flywheel/flexplate replaced', 'Flywheel/flexplate serviced', 'Front axle engagement switch replaced', 'Front axle seal replaced', 'Front crankshaft oil seal replaced', 'Front differential actuator replaced', 'Front differential fluid flushed', 'Front differential locking flushed', 'Front differential pinion seal replaced', 'Front differential replaced', 'Front driveshaft replaced', 'Front exhaust pipe replaced', 'Front output shaft seal replaced', 'Front pump replaced', 'Front pump seal replaced', 'Fuel contamination checked', 'Fuel evaporative canister replaced', 'Fuel filler cap gasket replaced', 'Fuel filler cap replaced', 'Fuel filler cap secured', 'Fuel filler door actuator replaced', 'Fuel filler door adjusted', 'Fuel filler door replaced', 'Fuel filler hose/pipe replaced', 'Fuel filler neck replaced', 'Fuel filler pipe vent hose replaced', 'Fuel filter replaced', 'Fuel gauge checked', 'Fuel gauge replaced', 'Fuel injection filter replaced', 'Fuel injection pump replaced', 'Fuel injection rail replaced', 'Fuel injection rail seals replaced', 'Fuel injection system checked', 'Fuel injection system flushed', 'Fuel injector sleeve replaced', 'Fuel injector wiring replaced', 'Fuel injector replaced', 'Fuel level sending unit replaced', 'Fuel line/hose replaced', 'Fuel pressure checked', 'Fuel pressure regulator replaced', 'Fuel pressure sensor replaced', 'Fuel pump gasket replaced', 'Fuel pump module replaced', 'Fuel pump relay replaced', 'Fuel pump replaced', 'Fuel pump solenoid replaced', 'Fuel pump/module repaired', 'Fuel rail replaced', 'Fuel shutoff valve replaced', 'Fuel system bled', 'Fuel system checked', 'Fuel system cleaned', 'Fuel system leak checked', 'Fuel system manifold replaced', 'Fuel tank bracket replaced', 'Fuel tank drained and cleaned', 'Fuel tank insulators installed', 'Fuel tank level sender checked', 'Fuel tank level sender replaced', 'Fuel tank module seal replaced', 'Fuel tank removed and reinstalled', 'Fuel tank replaced', 'Fuel tank straps replaced', 'Fuel tank switching valve replaced', 'Fuel vent hose/filter replaced', 'Gear position switch replaced', 'Gear selector lever adjusted', 'Gearshift indicator adjusted', 'Gearshift indicator replaced', 'Gearshift position sensor replaced', 'Glow plug relay replaced', 'Glow plug system checked', 'Glow plug replaced', 'Heat shield removed', 'Heat shield replaced', 'Heat shield secured', 'Heated oxygen sensor replaced', 'High altitude compensator filter replaced', 'Idle control valve/motor replaced', 'Idler pulley replaced', 'In-tank fuel filter replaced', 'Induction system checked', 'Induction system serviced', 'Injection pump nozzle replaced', 'Injector driver module replaced', 'Injector pressure sensor replaced', 'Intake air temperature sensor replaced', 'Intake manifold gasket replaced', 'Intake manifold replaced', 'Intake manifold tuning valve replaced', 'Intake silencer serviced', 'Intake/exhaust valves replaced', 'Intake/exhaust valves seals replaced', 'Intercooler checked', 'Intercooler hose replaced', 'Intercooler pump replaced', 'Intercooler replaced', 'Intercooler serviced', 'Intermediate shaft bearing replaced', 'Intermediate shaft seal replaced', 'Internal engine problems checked', 'Internal transmission repaired', 'Knock sensor replaced', 'Leak detection pump replaced', 'Leak detection pump filter replaced', 'Left axle replaced', 'Left rear axle replaced', 'Long block replaced', 'Lower intake manifold replaced', 'Lower radiator hose replaced', 'MAP sensor replaced', 'Manifold replaced', 'Manual transmission fluid changed', 'Manual transmission replaced', 'Mass air flow sensor replaced', 'Muffler replaced', 'Multiplex control unit checked', 'Multiplex control unit replaced', 'Multiplex control unit reprogrammed', 'Oil additive/treatment added', 'Oil and filter changed by owner', 'Oil consumption test performed', 'Oil control valve replaced', 'Oil cooler line replaced', 'Oil cooler seal replaced', 'Oil filler tube replaced', 'Oil filter adapter seal replaced', 'Oil level sensor replaced', 'Oil life sensor replaced', 'Oil line/hose replaced', 'Oil pan drain plug replaced', 'Oil pan gasket replaced', 'Oil pan replaced', 'Oil pressure gauge checked', 'Oil pressure sender/switch replaced', 'Oil pump seal replaced', 'Oil seal retainer installed', 'Oil temperature sensor replaced', 'Output shaft seal replaced', 'Outside air temperature sensor replaced', 'Oxygen sensor replaced', 'PCM reprogrammed', 'PCV filter replaced', 'PCV hose replaced', 'PCV hose repositioned', 'PCV system checked', 'PCV system serviced', 'PCV valve replaced', 'Passlock sensor replaced', 'Pinion bearing replaced', 'Pinion seal replaced', 'Piston rings replaced', 'Piston rod bearings replaced', 'Piston rod replaced', 'Piston replaced', 'Plenum/gasket replaced', 'Propane hoses replaced', 'Propane regulator renewed', 'Propane tanks filled', 'Pulley replaced', 'Pulse generator replaced', 'Purge flow sensor replaced', 'Radiator cap replaced', 'Radiator checked', 'Radiator fan operation checked', 'Radiator fan relay replaced', 'Radiator fan replaced', 'Radiator fan shroud replaced', 'Radiator hose clamp replaced', 'Radiator hose replaced', 'Radiator repaired', 'Radiator replaced', 'Radiator/condenser fan module replaced', 'Radiator/condenser fan motor replaced', 'Rear axle housing replaced', 'Rear axle oil seal replaced', 'Rear crankshaft oil seal replaced', 'Rear differential fluid flushed', 'Rear differential pinion seal replaced', 'Rear differential replaced', 'Rear differential serviced', 'Rear driveshaft replaced', 'Rear output shaft seal replaced', 'Remanufactured engine installed', 'Resonator replaced', 'Right axle replaced', 'Right exhaust manifold gasket replaced', 'Right rear axle replaced', 'Sensing and diagnostic module checked', 'Sensing and diagnostic module replaced', 'Sensing and diagnostic module reprogrammed', 'Sensor replaced', 'Serpentine belt replaced', 'Serpentine tensioner replaced', 'Shift interlock cable/linkage adjusted', 'Shift interlock cable/linkage replaced', 'Shift interlock override switch replaced', 'Shift interlock solenoid replaced', 'Shift interlock system checked', 'Shift lever knob/handle replaced', 'Shift lever seal replaced', 'Shift lever/assembly replaced', 'Shift linkage adjusted', 'Shift linkage checked', 'Shift linkage repaired', 'Shift linkage replaced', 'Shift lock actuator replaced', 'Shift motor replaced', 'Shifter bushings replaced', 'Shifter cable replaced', 'Shifter cables adjusted', 'Shifter gasket replaced', 'Short block replaced', 'Spark plug retainers replaced', 'Spark plug tubes/seals replaced', 'Spark plug wires replaced', 'Spark plug replaced', 'Spark plugs cleaned and gap adjusted', 'Supercharger replaced', 'Tachometer replaced', 'Tailpipe extension installed', 'Tailpipe replaced', 'Thermostat housing/gasket replaced', 'Thermostat replaced', 'Throttle body cleaned', 'Throttle body replaced', 'Throttle body spring modified', 'Throttle cable inspected', 'Throttle cable replaced', 'Throttle position sensor adjusted', 'Throttle position sensor replaced', 'Throttle return spring replaced', 'Throttle valve/housing replaced', 'Throttle/throttle body checked', 'Thrust plate seals replaced', 'Timing belt idler pulley/bearing replaced', 'Timing belt replaced', 'Timing belt tensioner/idler checked', 'Timing belt tensioner/idler replaced', 'Timing belt/chain replaced', 'Timing belt/chain tensioner replaced', 'Timing chain gears replaced', 'Timing chain replaced', 'Timing chain tensioner seal replaced', 'Timing chain tensioner/guide replaced', 'Torque converter flushed', 'Torque converter replaced', 'Torque converter serviced', 'Torque converter solenoid replaced', 'Track bar replaced', 'Traction control system checked', 'Traction control system filter replaced', 'Traction control valve replaced', 'Transaxle checked', 'Transaxle fluid changed', 'Transaxle overhauled', 'Transaxle replaced', 'Transfer case drain plug replaced', 'Transfer case fluid checked', 'Transfer case fluid flushed', 'Transfer case input shaft seal replaced', 'Transfer case linkage adjusted', 'Transfer case module/computer replaced', 'Transfer case motor replaced', 'Transfer case oil leak checked', 'Transfer case operation checked', 'Transfer case overhauled', 'Transfer case rear oil seal replaced', 'Transfer case removed to complete repairs', 'Transfer case replaced', 'Transfer case seal replaced', 'Transfer case serviced', 'Transfer module/computer reprogrammed', 'Transmission cable adjusted', 'Transmission case replaced', 'Transmission checked', 'Transmission computer/module checked', 'Transmission computer/module replaced', 'Transmission computer/module reprogrammed', 'Transmission cooler installed', 'Transmission cooler line replaced', 'Transmission dipstick replaced', 'Transmission drain plug replaced', 'Transmission filter replaced', 'Transmission fluid changed', 'Transmission fluid flushed', 'Transmission fluid level indicator replaced', 'Transmission fluid pressure sensor replaced', 'Transmission fluid pressure test performed', 'Transmission fluid temperature sensor replaced', 'Transmission fluid/oil leak checked', 'Transmission input speed sensor replaced', 'Transmission input/output speed sensor replaced', 'Transmission linkage adjusted', 'Transmission mount replaced', 'Transmission oil pump replaced', 'Transmission oil pump seal replaced', 'Transmission output speed sensor replaced', 'Transmission pressure switch replaced', 'Transmission range sensor checked', 'Transmission range sensor replaced', 'Transmission range switch replaced', 'Transmission rebuilt', 'Transmission removed and reinstalled', 'Transmission replaced', 'Transmission seal replaced', 'Transmission serviced', 'Transmission shift solenoid replaced', 'Transmission solenoid gasket replaced', 'Transmission speed sensor replaced', 'Transmission tailshaft bushing replaced', 'Transmission tailshaft housing replaced', 'Transmission tailshaft seal replaced', 'Transmission wiring harness replaced', 'Tune-up performed', 'Turbocharger air intake replaced', 'Turbocharger blow-off valve replaced', 'Turbocharger bypass valve replaced', 'Turbocharger checked', 'Turbocharger control valve replaced', 'Turbocharger coolant line replaced', 'Turbocharger feed line replaced', 'Turbocharger inlet pipe replaced', 'Turbocharger oil line seal replaced', 'Turbocharger oil lines replaced', 'Turbocharger pressure sensor replaced', 'Turbocharger replaced', 'Turbocharger seals/gaskets replaced', 'Turbocharger/supercharger serviced', 'Upper intake manifold replaced', 'Upper radiator hose replaced', 'VIU/VCIM reprogrammed', 'Vacuum check valve replaced', 'Vacuum control solenoid replaced', 'Vacuum hose repaired', 'Vacuum hose replaced', 'Vacuum switch and harness installed', 'Vacuum switching valve replaced', 'Vacuum system checked', 'Valve body overhauled', 'Valve body replaced', 'Valve cover gasket replaced', 'Valve cover replaced', 'Valve lifters replaced', 'Valve rocker arm repaired', 'Valve rocker arm serviced', 'Valve rocker arms replaced', 'Vehicle speed sensor replaced', 'Wastegate actuator replaced', 'Water in fuel sensor cleaned', 'Water in fuel sensor replaced', 'Water pump gasket replaced', 'Water pump pulley replaced', 'Water pump replaced', 'Water separator replaced', 'Water separator serviced'],
+            'Safety': ['ADAS checked', 'ADAS control unit calibrated', 'ADAS control unit programmed', 'ADAS radar programmed', 'Adaptive cruise control calibrated', 'Adaptive cruise control checked', 'Adaptive cruise control module checked', 'Adaptive cruise control module replaced', 'Adaptive cruise control programmed', 'Adaptive cruise control updated', 'Automatic emergency braking checked', 'Automatic parking assist programmed', 'Automatic parking assist updated', 'Back-up camera checked', 'Back-up camera replaced', 'Blind spot warning checked', 'Blind spot warning programmed', 'Blind spot warning replaced', 'Blind spot warning sensor replaced', 'Collision mitigation camera checked', 'Collision mitigation sensor checked', 'Collision mitigation system checked', 'Collision mitigation system installed', 'Dynamic driving assist checked', 'Dynamic driving assist control unit replaced', 'Dynamic driving assist programmed', 'Lane departure camera adjusted', 'Lane departure camera calibrated', 'Lane departure camera replaced', 'Lane departure module replaced', 'Lane departure warning actuator replaced', 'Lane departure warning checked', 'Lane departure warning programmed', 'Lane departure warning updated', 'Lane keeping assist calibrated', 'Lane keeping assist programmed', 'Lane keeping assist updated', 'Parking assist camera replaced', 'Parking assist checked', 'Parking assist module replaced', 'Parking assist programmed', 'Parking assist updated', 'Parking assist sensor replaced', 'Surround view camera control unit programmed', 'Surround view camera control unit replaced'],
+            'Steering': ['Idler arm bushings replaced', 'Idler arm replaced', 'Inner tie rod replaced', 'King pin replaced', 'Left tie rod end replaced', 'Lower steering column shaft replaced', 'Outer tie rod replaced', 'Power steering cap replaced', 'Power steering checked', 'Power steering cooler line replaced', 'Power steering cooler replaced', 'Power steering fluid flushed', 'Power steering fluid leak checked', 'Power steering hose clamp replaced', 'Power steering hose replaced', 'Power steering motor replaced', 'Power steering pressure switch replaced', 'Power steering pump bracket replaced', 'Power steering pump pressure checked', 'Power steering pump pulley replaced', 'Power steering pump repaired', 'Power steering pump replaced', 'Power steering pump seals replaced', 'Power steering pump shaft seal replaced', 'Power steering reservoir replaced', 'Power steering system bled', 'Power steering system serviced', 'Rack and pinion replaced', 'Right tie rod end replaced', 'Spiral cable assembly replaced', 'Steering angle sensor initialized', 'Steering angle sensor replaced', 'Steering column coupling replaced', 'Steering column covers replaced', 'Steering column repaired', 'Steering column replaced', 'Steering column tilt motor replaced', 'Steering damper replaced', 'Steering gear adjusted', 'Steering gear boot replaced', 'Steering gear bushings replaced', 'Steering gear oil changed', 'Steering gear repaired', 'Steering gear replaced', 'Steering knuckle replaced', 'Steering lock replaced', 'Steering relay rod replaced', 'Steering seal replaced', 'Steering shaft bearing replaced', 'Steering shaft lubricated', 'Steering shaft replaced', 'Steering shaft seal replaced', 'Steering stops replaced', 'Steering wheel centered', 'Steering wheel pad replaced', 'Steering wheel replaced', 'Steering wheel rotation sensor replaced', 'Steering wheel switches replaced', 'Tie rod end replaced', 'Tie rod sleeve replaced', 'Tie rod replaced', 'Tilt steering adjustment rod replaced'],
+            'Suspension': ['Air suspension checked', 'Air suspension compressor replaced', 'Air suspension level control replaced', 'Air suspension line/hose/valve replaced', 'Alignment checked', 'Alignment performed', 'Ball joint replaced', 'CV boot checked', 'CV boot replaced', 'CV joint replaced', 'CV joint serviced', 'Chrome/alloy wheels installed', 'Coil spring replaced', 'Control arm bushing replaced', 'Control arm inspected', 'Control arm replaced', 'Drag link end replaced', 'Drag link replaced', 'Five tires balanced', 'Five tires mounted', 'Five tires replaced', 'Four tires balanced', 'Four tires mounted', 'Four tires replaced', 'Four wheel alignment performed', 'Front coil spring replaced', 'Front radius arm/bushing replaced', 'Front shock absorber replaced', 'Front strut bearing replaced', 'Front strut cartridge replaced', 'Front strut replaced', 'Front suspension checked', 'Front suspension serviced', 'Front wheel bearing/hub replaced', 'Hub cap/wheel cover replaced', 'Leaf spring adjusted', 'Lift kit installed', 'Locking hub checked', 'Lower ball joint replaced', 'Lower control arm bushings replaced', 'Lower control arm inspected', 'Lower control arm replaced', 'Lug nut covers installed', 'Lug nut/bolt replaced', 'Lug nuts checked', 'Nitrogen fill tires', 'One tire balanced', 'One tire mounted', 'One tire replaced', 'One wheel replaced', 'Pitman arm replaced', 'Pitman shaft seal replaced', 'Rear coil spring replaced', 'Rear control arm replaced', 'Rear leaf spring replaced', 'Rear lower control arm replaced', 'Rear shock absorber replaced', 'Rear shock mount replaced', 'Rear spring replaced', 'Rear strut/insert cartridge replaced', 'Rear suspension checked', 'Rear suspension serviced', 'Rear wheel bearing seal replaced', 'Rear wheel bearing/hub seal replaced', 'Rear wheel bearing/hub replaced', 'Ride height control sensor replaced', 'Ride height control valve replaced', 'Ride height system repaired', 'Shock absorber bushing replaced', 'Shock absorber replaced', 'Spare tire carrier replaced', 'Spare tire cover installed', 'Spare tire hoist replaced', 'Spare tire installed', 'Spare tire lock installed', 'Spare tire remounted', 'Spindle replaced', 'Stabilizer bar bushings lubricated', 'Stabilizer bar bushings replaced', 'Stabilizer bar links replaced', 'Stabilizer bar replaced', 'Steering knuckle replaced', 'Steering/suspension boot replaced', 'Steering/suspension checked', 'Steering/suspension lubricated', 'Strut bushings replaced', 'Strut mount replaced', 'Strut replaced', 'Suspension level sensor replaced', 'Suspension serviced', 'Sway bar bushing replaced', 'Sway bar link replaced', 'TCS system checked', 'Three tires balanced', 'Three tires mounted', 'Three tires replaced', 'Thrust angle alignment performed', 'Tire condition and pressure checked', 'Tire jack replaced', 'Tire pressure monitoring system checked', 'Tire pressure monitoring system reset', 'Tire pressure monitoring system serviced', 'Tire pressure sensor checked', 'Tire pressure sensor replaced', 'Tire pressure sensor reprogrammed', 'Tire repair kit checked', 'Tire repair kit replaced', 'Tire repaired', 'Tire studs installed', 'Tire studs removed', 'Tire valve stem/core replaced', 'Tire balanced', 'Tire changed', 'Tire dismounted', 'Tire mounted', 'Tire replaced', 'Torsion bar adjusted', 'Torsion bar replaced', 'Trailing arm bushing replaced', 'Trailing arm replaced', 'Two tires balanced', 'Two tires mounted', 'Two tires replaced', 'Two wheel alignment performed', 'Upper ball joint replaced', 'Upper control arm bushings replaced', 'Upper control arm replaced', 'Wheel bearing dust cap replaced', 'Wheel bearing seal replaced', 'Wheel bearing serviced', 'Wheel bearing/hub replaced', 'Wheel bearings adjusted', 'Wheel bearings checked', 'Wheel bearings repacked', 'Wheel covers/trim rings installed', 'Wheel hub checked', 'Wheel locks installed', 'Wheel locks removed', 'Wheel lug nuts torqued', 'Wheel lug stud replaced', 'Wheel speed sensor harness replaced', 'Wheel speed sensor replaced', 'Wheel refinished', 'Wheel repaired', 'Wheel replaced', 'Wheels checked', 'Yaw rate sensor replaced'],
+            'Vehicle': ['5,000 mile service performed', '10,000 mile service performed', '100,000 mile service performed', '102,000 mile service performed', '105,000 mile service performed', '110,000 kilometer service performed', 'Accessories installed', 'Back-up camera installed', 'Maintenance inspection completed', 'Maintenance reminder reset', 'Pre-delivery inspection completed', 'Registration issued or renewed', 'Vehicle washed/detailed']
+        };
+
+        class GarageApp {
+            constructor() {
+                this.vehicles = JSON.parse(localStorage.getItem('vehicles')) || [];
+                this.selectedVehicleId = null;
+                this.notifications = [];
+                this.init();
+            }
+
+            init() {
+                this.renderGarage();
+                this.setupServiceWorker();
+                this.checkReminders();
+                this.setInterval(() => this.checkReminders(), 60000);
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('logDate').value = today;
+            }
+
+            setupServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    const swCode = `
+                        self.addEventListener('push', event => {
+                            const options = {
+                                body: event.data.text(),
+                                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%23ff6b6b" width="192" height="192"/><text x="50%" y="50%" font-size="120" fill="%23fff" text-anchor="middle" dominant-baseline="middle">🔧</text></svg>',
+                                badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔧</text></svg>'
+                            };
+                            self.registration.showNotification('CarCare Garage', options);
+                        });
+                    `;
+                    const blob = new Blob([swCode], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
+                    navigator.serviceWorker.register(swUrl).catch(err => console.log('SW registration failed:', err));
+                }
+            }
+
+            checkReminders() {
+                this.vehicles.forEach(vehicle => {
+                    vehicle.reminders?.forEach(reminder => {
+                        const daysUntil = Math.ceil((new Date(reminder.nextDue) - new Date()) / (1000 * 60 * 60 * 24));
+                        if (daysUntil === 0 || daysUntil === 7 || daysUntil === 1) {
+                            this.showNotification(`${reminder.serviceType} due for ${vehicle.year} ${vehicle.make}!`);
+                        }
+                    });
+                });
+            }
+
+            showNotification(message) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('CarCare Garage', {
+                        body: message,
+                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%23ff6b6b" width="192" height="192"/><text x="50%" y="50%" font-size="120" fill="%23fff" text-anchor="middle" dominant-baseline="middle">🔧</text></svg>'
+                    });
+                }
+            }
+
+            addVehicle(vehicle) {
+                vehicle.id = Date.now().toString();
+                vehicle.logs = [];
+                vehicle.reminders = [];
+                this.vehicles.push(vehicle);
+                this.save();
+                this.renderGarage();
+                this.selectVehicle(vehicle.id);
+            }
+
+            deleteVehicle(id) {
+                this.vehicles = this.vehicles.filter(v => v.id !== id);
+                this.save();
+                if (this.selectedVehicleId === id) {
+                    this.selectedVehicleId = null;
+                }
+                this.renderGarage();
+            }
+
+            selectVehicle(id) {
+                this.selectedVehicleId = id;
+                this.renderGarage();
+                this.renderDetailView();
+            }
+
+            addMaintenanceLog(log) {
+                const vehicle = this.vehicles.find(v => v.id === this.selectedVehicleId);
+                if (vehicle) {
+                    log.id = Date.now().toString();
+                    vehicle.logs.push(log);
+                    this.save();
+                    this.renderDetailView();
+                }
+            }
+
+            deleteLog(logId) {
+                const vehicle = this.vehicles.find(v => v.id === this.selectedVehicleId);
+                if (vehicle) {
+                    vehicle.logs = vehicle.logs.filter(l => l.id !== logId);
+                    this.save();
+                    this.renderDetailView();
+                }
+            }
+
+            addReminder(serviceType, intervalDays) {
+                const vehicle = this.vehicles.find(v => v.id === this.selectedVehicleId);
+                if (vehicle) {
+                    const lastLog = vehicle.logs && vehicle.logs.length > 0 
+                        ? new Date(vehicle.logs[vehicle.logs.length - 1].date)
+                        : new Date();
+                    const nextDue = new Date(lastLog.getTime() + intervalDays * 24 * 60 * 60 * 1000);
+                    
+                    const reminder = {
+                        id: Date.now().toString(),
+                        serviceType,
+                        nextDue: nextDue.toISOString().split('T')[0],
+                        intervalDays
+                    };
+                    vehicle.reminders.push(reminder);
+                    this.save();
+                    this.renderDetailView();
+                }
+            }
+
+            deleteReminder(reminderId) {
+                const vehicle = this.vehicles.find(v => v.id === this.selectedVehicleId);
+                if (vehicle) {
+                    vehicle.reminders = vehicle.reminders.filter(r => r.id !== reminderId);
+                    this.save();
+                    this.renderDetailView();
+                }
+            }
+
+            save() {
+                localStorage.setItem('vehicles', JSON.stringify(this.vehicles));
+            }
+
+            renderGarage() {
+                const grid = document.getElementById('vehiclesGrid');
+                if (this.vehicles.length === 0) {
+                    grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏚️</div><p>Garage is empty. Add your first vehicle!</p></div>';
+                    return;
+                }
+                grid.innerHTML = this.vehicles.map(vehicle => `
+                    <div class="vehicle-card ${vehicle.id === this.selectedVehicleId ? 'selected' : ''}" onclick="app.selectVehicle('${vehicle.id}')">
+                        <div class="vehicle-image ${!vehicle.photo ? '' : ''}">
+                            ${vehicle.photo ? `<img src="${vehicle.photo}" alt="vehicle">` : '🚗'}
+                        </div>
+                        <div>
+                            <div class="vehicle-name">${vehicle.year}</div>
+                            <div class="vehicle-model">${vehicle.make} ${vehicle.model}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderDetailView() {
+                const vehicle = this.vehicles.find(v => v.id === this.selectedVehicleId);
+                if (!vehicle) return;
+
+                const container = document.getElementById('detailView');
+                const logs = vehicle.logs || [];
+                const reminders = vehicle.reminders || [];
+                const totalSpent = logs.reduce((sum, log) => sum + (log.cost || 0), 0);
+
+                container.innerHTML = `
+                    <div class="vehicle-header">
+                        <h2>${vehicle.year} ${vehicle.make} ${vehicle.model}</h2>
+                        <button class="back-btn" onclick="showGarage()">← Back</button>
+                    </div>
+
+                    <div class="vehicle-photo ${!vehicle.photo ? '' : ''}">
+                        ${vehicle.photo ? `<img src="${vehicle.photo}" alt="vehicle">` : '📸'}
+                    </div>
+
+                    <div class="photo-buttons">
+                        <button class="btn-primary" onclick="updateVehiclePhoto()">Update Photo</button>
+                        <button class="btn-danger" onclick="app.deleteVehicle('${vehicle.id}'); showGarage();">Delete</button>
+                    </div>
+
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                        <button class="tab" onclick="switchTab('logs')">Logs</button>
+                        <button class="tab" onclick="switchTab('reminders')">Reminders</button>
+                    </div>
+
+                    <div id="overviewTab" class="tab-content active">
+                        <div class="analytics-cards">
+                            <div class="analytics-card">
+                                <div class="analytics-label">Total Spent</div>
+                                <div class="analytics-value">$${totalSpent.toFixed(2)}</div>
+                            </div>
+                            <div class="analytics-card">
+                                <div class="analytics-label">Total Services</div>
+                                <div class="analytics-value">${logs.length}</div>
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="openAddLogModal()" style="width: 100%; margin-bottom: 1rem;">+ Add Log</button>
+                    </div>
+
+                    <div id="logsTab" class="tab-content">
+                        <button class="btn-primary" onclick="openAddLogModal()" style="width: 100%; margin-bottom: 1rem;">+ Add Log</button>
+                        ${logs.length > 0 ? logs.slice().reverse().map(log => `
+                            <div class="log-item">
+                                <div class="log-info">
+                                    <h4>${log.serviceType}</h4>
+                                    <div class="log-meta">${log.date}${log.mileage ? ` • ${log.mileage.toLocaleString()} mi` : ''}</div>
+                                    <div class="log-cost">$${log.cost.toFixed(2)}</div>
+                                    ${log.notes ? `<div class="log-notes">${log.notes}</div>` : ''}
+                                </div>
+                                <button class="delete-btn" onclick="app.deleteLog('${log.id}')">×</button>
+                            </div>
+                        `).join('') : '<div class="empty-state"><p>No logs yet</p></div>'}
+                    </div>
+
+                    <div id="remindersTab" class="tab-content">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem;">
+                            <button class="btn-secondary" onclick="app.addReminder('Oil Change', 180)">Oil Change</button>
+                            <button class="btn-secondary" onclick="app.addReminder('Tire Rotation', 365)">Tire Rotation</button>
+                            <button class="btn-secondary" onclick="app.addReminder('Air Filter', 730)">Air Filter</button>
+                            <button class="btn-secondary" onclick="app.addReminder('Brakes', 730)">Brakes</button>
+                        </div>
+                        ${reminders.length > 0 ? reminders.map(r => {
+                            const daysUntil = Math.ceil((new Date(r.nextDue) - new Date()) / (1000 * 60 * 60 * 24));
+                            return `
+                            <div class="reminder-item ${daysUntil < 0 ? 'overdue' : ''}">
+                                <div class="reminder-info">
+                                    <h4>${r.serviceType}</h4>
+                                    <div class="reminder-due">Due: ${r.nextDue}</div>
+                                    <div class="reminder-status ${daysUntil < 0 ? 'overdue' : 'upcoming'}">
+                                        ${daysUntil < 0 ? `⚠️ ${Math.abs(daysUntil)} days overdue` : `✓ ${daysUntil} days left`}
+                                    </div>
+                                </div>
+                                <button class="delete-btn" onclick="app.deleteReminder('${r.id}')">×</button>
+                            </div>
+                            `;
+                        }).join('') : '<div class="empty-state"><p>No reminders set</p></div>'}
+                    </div>
+                `;
+                container.classList.add('active');
+            }
+        }
+
+        const app = new GarageApp();
+
+        function openAddVehicleModal() {
+            document.getElementById('addVehicleModal').classList.add('active');
+        }
+
+        function openAddLogModal() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('logDate').value = today;
+            document.getElementById('logCategory').value = '';
+            document.getElementById('logService').value = '';
+            document.getElementById('logCost').value = '';
+            document.getElementById('logMileage').value = '';
+            document.getElementById('logNotes').value = '';
+            document.getElementById('addLogModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function saveNewVehicle(event) {
+            event.preventDefault();
+            const year = document.getElementById('vehicleYear').value;
+            const make = document.getElementById('vehicleMake').value;
+            const model = document.getElementById('vehicleModel').value;
+            const vin = document.getElementById('vehicleVin').value;
+
+            if (!year || !make || !model) {
+                alert('Please fill in Year, Make, and Model');
+                return;
+            }
+
+            const photoFile = document.getElementById('vehiclePhoto').files[0];
+            if (photoFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    app.addVehicle({ year: parseInt(year), make, model, vin, photo: e.target.result });
+                    closeModal('addVehicleModal');
+                    event.target.reset();
+                };
+                reader.readAsDataURL(photoFile);
+            } else {
+                app.addVehicle({ year: parseInt(year), make, model, vin });
+                closeModal('addVehicleModal');
+                event.target.reset();
+            }
+        }
+
+        function updateServiceOptions() {
+            const category = document.getElementById('logCategory').value;
+            const serviceSelect = document.getElementById('logService');
+            serviceSelect.innerHTML = '<option value="">Select Service</option>';
+            if (category && serviceCategories[category]) {
+                serviceCategories[category].forEach(service => {
+                    const option = document.createElement('option');
+                    option.value = service;
+                    option.textContent = service;
+                    serviceSelect.appendChild(option);
+                });
+            }
+        }
+
+        function saveMaintenanceLog(event) {
+            event.preventDefault();
+            const date = document.getElementById('logDate').value;
+            const serviceType = document.getElementById('logService').value;
+            const cost = parseFloat(document.getElementById('logCost').value);
+            const mileage = parseInt(document.getElementById('logMileage').value);
+            const notes = document.getElementById('logNotes').value;
+
+            if (!date || !serviceType || !cost) {
+                alert('Please fill in Date, Service Type, and Cost');
+                return;
+            }
+
+            app.addMaintenanceLog({
+                date,
+                serviceType,
+                cost,
+                mileage: mileage || 0,
+                notes
+            });
+
+            closeModal('addLogModal');
+            event.target.reset();
+        }
+
+        function updateVehiclePhoto() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        const vehicle = app.vehicles.find(v => v.id === app.selectedVehicleId);
+                        if (vehicle) {
+                            vehicle.photo = evt.target.result;
+                            app.save();
+                            app.renderDetailView();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showGarage() {
+            document.getElementById('detailView').classList.remove('active');
+            updateNav('garage');
+        }
+
+        function showStats() {
+            updateNav('stats');
+        }
+
+        function showNotifications() {
+            if ('Notification' in window && Notification.permission !== 'granted') {
+                Notification.requestPermission();
+            }
+            updateNav('notifications');
+        }
+
+        function showSettings() {
+            updateNav('settings');
+        }
+
+        function updateNav(section) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.nav-btn').classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        });
+
+        // Close modal on outside click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        setInterval(() => app.checkReminders(), 300000);
+    </script>
+</body>
+</html>
